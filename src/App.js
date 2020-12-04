@@ -1,5 +1,8 @@
 import logo from './logo.svg';
 import './App.css';
+import { DatePicker } from 'antd';
+import 'antd/dist/antd.css';
+
 
 function App() {
   return (
@@ -17,6 +20,7 @@ function App() {
         >
           Learn React
         </a>
+        <DatePicker onChange={(date) => {alert(date)}}/>
       </header>
     </div>
   );
