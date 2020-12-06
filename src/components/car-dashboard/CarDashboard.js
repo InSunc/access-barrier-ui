@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Input, Popconfirm, Form, Button, Select, Tag } from 'antd';
 import { PlusSquareOutlined } from '@ant-design/icons';
 import axios from 'axios'
+import Constants from '../../constants'
 
 const { Option } = Select
 const brands = [{ name: "BMW", color: "gray" }, { name: "Mercedes", color: "red" }, { name: "Toyota", color: "cyan" }, { name: "Tesla", color: "blue" }]
@@ -68,7 +69,7 @@ function CarDashboard() {
 	const [reload, setReload] = useState(false) // flag to control fetchData hook
 	useEffect(() => {
 		const fetchData = async () => {
-			const result = await axios.get('http://localhost:8080/api/car')
+			const result = await axios.get(Constants.CAR_ENDPOINT)
 			console.log(result)
 			setData(result.data)
 			setLoading(false)
@@ -80,7 +81,7 @@ function CarDashboard() {
 	const isEditing = (record) => record.id === editingId;
 
 	const deleteRecord = async (record) => {
-		const result = await axios.delete(`http://localhost:8080/api/car/${record.id}`)
+		const result = await axios.delete(`${Constants.CAR_ENDPOINT}/${record.id}`)
 		console.log(result.status)
 		refreshData()
 	};
@@ -112,7 +113,7 @@ function CarDashboard() {
 				console.log(newData[index])
 				let dto = newData[index]
 				delete dto.id
-				const result = await axios.post('http://localhost:8080/api/car', dto)
+				const result = await axios.post(Constants.CAR_ENDPOINT, dto)
 				console.log(result.data)
 				// newData[index] = result.data
 				refreshData()
