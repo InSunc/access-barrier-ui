@@ -7,7 +7,7 @@ import {
   Link
 } from "react-router-dom";
 import {
-  CarOutlined,
+  FieldTimeOutlined,
   IdcardOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, } from 'antd';
@@ -25,16 +25,15 @@ function App() {
       <Layout style={{ minHeight: '100vh' }}>
         <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
           <div className="logo" />
-          <CarOutlined />
           <Menu theme="dark" defaulSelectedKeys={['1']} mode="inline">
-            <Menu.Item key="1" icon={<CarOutlined />}>
+            <Menu.Item key="1" icon={<IdcardOutlined  />}>
               <Link to="/cars">
-                Manage cars
+                Manage clients
               </Link>
             </Menu.Item>
-            <Menu.Item key="2" icon={<IdcardOutlined />}>
+            <Menu.Item key="2" icon={<FieldTimeOutlined />}>
               <Link to="/history">
-                Cars log
+                Visits History
               </Link>
             </Menu.Item>
           </Menu>

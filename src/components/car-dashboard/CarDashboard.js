@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
-import { Table, Input, InputNumber, Popconfirm, Form, Button, Select, Tag } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Input, Popconfirm, Form, Button, Select, Tag } from 'antd';
+import { PlusSquareOutlined } from '@ant-design/icons';
+import axios from 'axios'
 
 const { Option } = Select
-const originData = [];
-const brands = [{name: "BMW", color:"gray"}, {name: "Mercedes", color: "red"}, {name: "Toyota", color: "cyan"}, {name: "Tesla", color:"blue"}]
+const brands = [{ name: "BMW", color: "gray" }, { name: "Mercedes", color: "red" }, { name: "Toyota", color: "cyan" }, { name: "Tesla", color: "blue" }]
 
-for (let i = 0; i < 100; i++) {
-	originData.push({
-		key: i.toString(),
-		owner: `Edrward ${i}`,
-		brand: brands[Math.floor(Math.random() * brands.length)].name,
-		plateNumber: `${Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 3).toUpperCase()} ${Math.floor(Math.random() * 1000000).toString()}`,
-	});
-}
+const originData = [];
 
 const EditableCell = ({
+	key,
 	editing,
 	dataIndex,
 	title,
@@ -26,13 +21,16 @@ const EditableCell = ({
 }) => {
 	// check the component type
 	let inputNode;
+	const brand = brands.find(brand => brand.name === children[1])
+	const color = brand === undefined ? "blue" : brand.color
+
 	if (inputType === 'selection') {
 		inputNode = (
 			<Select>
 				{brands.map(brand => (<Option value={brand.name}>{brand.name}</Option>))}
 			</Select>
 		)
-		children = (<Tag value={children} color={brands.find(brand => brand.name === children[1]).color}>{children}</Tag>)
+		children = (<Tag color={color}>{children}</Tag>)
 	} else {
 		inputNode = (<Input />)
 	}
@@ -64,12 +62,27 @@ const EditableCell = ({
 function CarDashboard() {
 	const [form] = Form.useForm();
 	const [data, setData] = useState(originData);
-	const [editingKey, setEditingKey] = useState('');
+	const [loading, setLoading] = useState(true)
+	const [editingId, setEditingId] = useState('');
 
-	const isEditing = (record) => record.key === editingKey;
+	const [reload, setReload] = useState(false) // flag to control fetchData hook
+	useEffect(() => {
+		const fetchData = async () => {
+			const result = await axios.get('http://localhost:8080/api/car')
+			console.log(result)
+			setData(result.data)
+			setLoading(false)
+		}
+		fetchData()
+	}, [reload])
+	const refreshData = () => {setReload(!reload)}
 
-	const deleteRecord = (record) => {
-		console.log(record)
+	const isEditing = (record) => record.id === editingId;
+
+	const deleteRecord = async (record) => {
+		const result = await axios.delete(`http://localhost:8080/api/car/${record.id}`)
+		console.log(result.status)
+		refreshData()
 	};
 
 	const edit = (record) => {
@@ -79,28 +92,38 @@ function CarDashboard() {
 			plateNumber: '',
 			...record,
 		});
-		setEditingKey(record.key);
+		setEditingId(record.id);
 	};
 
 	const cancel = () => {
-		setEditingKey('');
+		refreshData()
+		setEditingId('');
 	};
 
-	const save = async (key) => {
+	const save = async (id) => {
 		try {
 			const row = await form.validateFields();
 			const newData = [...data];
-			const index = newData.findIndex((item) => key === item.key);
+			const index = newData.findIndex((item) => id === item.id);
 
 			if (index > -1) {
 				const item = newData[index];
 				newData.splice(index, 1, { ...item, ...row });
-				setData(newData);
-				setEditingKey('');
+				console.log(newData[index])
+				let dto = newData[index]
+				delete dto.id
+				const result = await axios.post('http://localhost:8080/api/car', dto)
+				console.log(result.data)
+				// newData[index] = result.data
+				refreshData()
+				setEditingId('');
 			} else {
-				newData.push(row);
+				// create new
+				console.log(newData.length)
+				const item = newData.push(row);
+				console.log(newData.length)
 				setData(newData);
-				setEditingKey('');
+				edit(item)
 			}
 		} catch (errInfo) {
 			console.log('Validate Failed:', errInfo);
@@ -133,7 +156,7 @@ function CarDashboard() {
 				const editable = isEditing(record);
 				return editable ? (
 					<span>
-						<Button type="text" onClick={() => save(record.key)}>
+						<Button type="text" onClick={() => save(record.id)}>
 							Save
 						</Button>
 						<Popconfirm title="Cancel changes?" onConfirm={cancel}>
@@ -142,10 +165,10 @@ function CarDashboard() {
 					</span>
 				) : (
 						<>
-							<Button type="text" disabled={editingKey !== ''} onClick={() => edit(record)}>
+							<Button type="text" disabled={editingId !== ''} onClick={() => edit(record)}>
 								Edit
 							</Button>
-							<Button danger type="text" disabled={editingKey !== ''} onClick={() => deleteRecord(record)}>
+							<Button danger type="text" disabled={editingId !== ''} onClick={() => deleteRecord(record)}>
 								Delete
 							</Button>
 						</>
@@ -172,6 +195,9 @@ function CarDashboard() {
 
 	return (
 		<Form form={form} component={false}>
+			<Button onClick={save} type="primary" disabled={editingId !== ''} icon={<PlusSquareOutlined />}>
+				Add a client
+			</Button>
 			<Table
 				components={{
 					body: {
@@ -179,6 +205,7 @@ function CarDashboard() {
 					},
 				}}
 				dataSource={data}
+				loading={loading}
 				columns={mergedColumns}
 				rowClassName="editable-row"
 				pagination={{
