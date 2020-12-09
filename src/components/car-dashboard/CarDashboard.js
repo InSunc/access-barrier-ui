@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Popconfirm, Form, Button, Select, Tag } from 'antd';
-import { PlusSquareOutlined } from '@ant-design/icons';
+import { PlusSquareOutlined, DeleteFilled, EditOutlined, SaveOutlined, StopOutlined} from '@ant-design/icons';
 import axios from 'axios'
 import Constants from '../../constants'
 
@@ -127,7 +127,7 @@ function CarDashboard() {
 				edit(item)
 			}
 		} catch (errInfo) {
-			console.log('Validate Failed:', errInfo);
+			console.log('Validation Failed:', errInfo);
 		}
 	};
 
@@ -157,19 +157,19 @@ function CarDashboard() {
 				const editable = isEditing(record);
 				return editable ? (
 					<span>
-						<Button type="text" onClick={() => save(record.id)}>
+						<Button type="text" onClick={() => save(record.id)} icon={<SaveOutlined />}>
 							Save
 						</Button>
 						<Popconfirm title="Cancel changes?" onConfirm={cancel}>
-							<Button type="text">Cancel</Button>
+							<Button type="text" icon={<StopOutlined />}>Cancel</Button>
 						</Popconfirm>
 					</span>
 				) : (
 						<>
-							<Button type="text" disabled={editingId !== ''} onClick={() => edit(record)}>
+							<Button type="text" disabled={editingId !== ''} onClick={() => edit(record)} icon={<EditOutlined/>}>
 								Edit
 							</Button>
-							<Button danger type="text" disabled={editingId !== ''} onClick={() => deleteRecord(record)}>
+							<Button danger type="text" disabled={editingId !== ''} onClick={() => deleteRecord(record)} icon={<DeleteFilled/>}>
 								Delete
 							</Button>
 						</>
