@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Input, Popconfirm, Form, Button, Select, Tag } from 'antd';
-import { PlusSquareOutlined, DeleteFilled, EditOutlined, SaveOutlined, StopOutlined} from '@ant-design/icons';
+import {
+	Table,
+	Input,
+	Popconfirm,
+	Form,
+	Button,
+	Select,
+	Tag,
+	Statistic,
+	Col,
+	Row,
+	Space
+} from 'antd';
+import { PlusSquareOutlined, DeleteFilled, EditOutlined, SaveOutlined, StopOutlined, SearchOutlined} from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import axios from 'axios'
-import Constants from '../../constants'
+import Constants from '../constants'
 
 const { Option } = Select
-const brands = [{ name: "BMW", color: "gray" }, { name: "Mercedes", color: "red" }, { name: "Toyota", color: "cyan" }, { name: "Tesla", color: "blue" }]
 
 const originData = [];
 
@@ -22,16 +34,16 @@ const EditableCell = ({
 }) => {
 	// check the component type
 	let inputNode;
-	const brand = brands.find(brand => brand.name === children[1])
+	const brand = Constants.BRANDS.find(brand => brand.name.toLowerCase() === String(children[1]).toLowerCase())
 	const color = brand === undefined ? "blue" : brand.color
 
 	if (inputType === 'selection') {
 		inputNode = (
 			<Select>
-				{brands.map(brand => (<Option value={brand.name}>{brand.name}</Option>))}
+				{Constants.BRANDS.map(brand => (<Option value={brand.name}>{brand.name}</Option>))}
 			</Select>
 		)
-		children = (<Tag color={color}>{children}</Tag>)
+		children = (<Tag color={color}>{children[1]}</Tag>)
 	} else {
 		inputNode = (<Input />)
 	}
@@ -61,10 +73,13 @@ const EditableCell = ({
 };
 
 function CarDashboard() {
-	const [form] = Form.useForm();
-	const [data, setData] = useState(originData);
+	const [form] = Form.useForm()
+	const [data, setData] = useState(originData)
 	const [loading, setLoading] = useState(true)
-	const [editingId, setEditingId] = useState('');
+	const [editingId, setEditingId] = useState('')
+	const [clientsNr, setClientsNr] = useState(0)
+	const [searchText, setSearchText] = useState('')
+	const [searchedColumn, setSearchedColumn] = useState('')
 
 	const [reload, setReload] = useState(false) // flag to control fetchData hook
 	useEffect(() => {
@@ -73,6 +88,7 @@ function CarDashboard() {
 			console.log(result)
 			setData(result.data)
 			setLoading(false)
+			setClientsNr(result.data.length)
 		}
 		fetchData()
 	}, [reload])
@@ -101,6 +117,62 @@ function CarDashboard() {
 		setEditingId('');
 	};
 
+	const getColumnSearchProps = dataIndex => ({
+		filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+			<div style={{ padding: 8 }}>
+				<Input
+					placeholder={`Search ${dataIndex}`}
+					value={selectedKeys[0]}
+					onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+					onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+					style={{ width: 188, marginBottom: 8, display: 'block' }}
+				/>
+				<Space>
+					<Button
+						type="primary"
+						onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+						icon={<SearchOutlined />}
+						size="small"
+						style={{ width: 90 }}
+					>
+						Search
+				</Button>
+					<Button onClick={() => handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+						Reset
+				</Button>
+				</Space>
+			</div>
+		),
+		filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+		onFilter: (value, record) =>
+			record[dataIndex]
+				? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+				: '',
+		render: text =>
+			searchedColumn === dataIndex ? (
+				<Highlighter
+					highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+					searchWords={[searchText]}
+					autoEscape
+					textToHighlight={text ? text.toString() : ''}
+				/>
+			) : (
+					text
+				),
+	});
+
+	const handleSearch = (selectedKeys, confirm, dataIndex) => {
+		confirm();
+		setSearchText(selectedKeys[0])
+		setSearchedColumn(dataIndex)
+	};
+
+	const handleReset = clearFilters => {
+		clearFilters();
+		setSearchText('')
+	};
+
+
 	const save = async (id) => {
 		try {
 			const row = await form.validateFields();
@@ -110,11 +182,9 @@ function CarDashboard() {
 			if (index > -1) {
 				const item = newData[index];
 				newData.splice(index, 1, { ...item, ...row });
-				console.log(newData[index])
 				let dto = newData[index]
-				delete dto.id
+				//delete dto.id
 				const result = await axios.post(Constants.CAR_ENDPOINT, dto)
-				console.log(result.data)
 				// newData[index] = result.data
 				refreshData()
 				setEditingId('');
@@ -137,6 +207,7 @@ function CarDashboard() {
 			dataIndex: 'owner',
 			width: '25%',
 			editable: true,
+			...getColumnSearchProps('owner'),
 		},
 		{
 			title: 'Brand',
@@ -149,6 +220,7 @@ function CarDashboard() {
 			dataIndex: 'plateNumber',
 			width: '40%',
 			editable: true,
+			...getColumnSearchProps('owner'),
 		},
 		{
 			title: 'Actions',
@@ -195,10 +267,18 @@ function CarDashboard() {
 	});
 
 	return (
+	<>
+		<Row justify="space-between" align="bottom">
+			<Col span={20}>
+				<Button onClick={save} type="primary" disabled={editingId !== ''} icon={<PlusSquareOutlined />}>
+					Add a client
+				</Button>
+			</Col>
+			<Col span={4}>
+				<Statistic  style={{'text-align': 'center'}} valueStyle={{'text-align': 'center'}} title="Total clients:" value={clientsNr} />
+			</Col>
+		</Row>
 		<Form form={form} component={false}>
-			<Button onClick={save} type="primary" disabled={editingId !== ''} icon={<PlusSquareOutlined />}>
-				Add a client
-			</Button>
 			<Table
 				components={{
 					body: {
@@ -214,6 +294,7 @@ function CarDashboard() {
 				}}
 			/>
 		</Form>
+	</>
 	);
 };
 

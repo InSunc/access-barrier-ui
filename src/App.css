@@ -11,6 +11,10 @@
 	color: white;
 }
 
+.component {
+	margin: 5% 30%;
+}
+
 .site-layout .site-layout-background {
 	background: #fff;
   }

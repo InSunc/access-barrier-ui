@@ -1,61 +1,66 @@
 import './App.css';
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
 } from "react-router-dom";
 import {
   FieldTimeOutlined,
   IdcardOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, } from 'antd';
-import CarDashboard from './components/car-dashboard/CarDashboard';
-import History from './components/car-dashboard/History';
+import CarDashboard from './components/CarDashboard';
+import ParkingLot from './components/ParkingLot';
+import ParkingHistory from './components/ParkingHistory';
 
 const { Header, Content, Footer, Sider } = Layout;
 
 function App() {
   const [collapsed, setCollapsed] = useState(false)
   // document.addEventListener("keydown", () => {setCollapsed(!collapsed)})
+  const [selectedMenuKey, setSelectedMenuKey] = useState("0")
 
   return (
     <Router>
       <Layout style={{ minHeight: '100vh' }}>
         <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-          <div className="logo" />
-          <Menu theme="dark" defaulSelectedKeys={['1']} mode="inline">
-            <Menu.Item key="1" icon={<IdcardOutlined  />}>
+          {/* <div className="logo"/> */}
+          <Menu theme="dark" defaultSelectedKeys="0" mode="inline">
+            <Menu.Item key="0" icon={<IdcardOutlined  />}>
               <Link to="/cars">
                 Manage clients
               </Link>
             </Menu.Item>
-            <Menu.Item key="2" icon={<FieldTimeOutlined />}>
-              <Link to="/history">
-                Visits History
+            <Menu.Item key="1" icon={<CheckSquareOutlined />}>
+              <Link to="/parking-lot">
+                Parking Lot
+              </Link>
+            </Menu.Item>
+            <Menu.Item icon={<FieldTimeOutlined />}>
+              <Link to="/parking-history">
+                Parking History
               </Link>
             </Menu.Item>
           </Menu>
         </Sider>
 
         <Layout className="site-layout">
-          <Header className="site-layout-background" style={{ padding: 0 }} />
           <Content style={{ margin: '0 16px' }}>
-            <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
+            <div style={{ padding: 24, minHeight: 360 }}>
               <Switch>
                 <Route exact path="/" component={CarDashboard} />
                 <Route path="/cars" component={CarDashboard} />
-                <Route path="/history" component={History} />
+                <Route path="/parking-lot" component={ParkingLot} />
+                <Route path="/parking-history" component={ParkingHistory} />
               </Switch>
             </div>
           </Content>
 
           <Footer style={{ textAlign: 'center' }}>AccessBarrier ©2020 This is a footer</Footer>
         </Layout>
-
-
-
       </Layout>
     </Router>
   );
